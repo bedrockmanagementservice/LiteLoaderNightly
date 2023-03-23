@@ -35,7 +35,8 @@ jobs:
             $jsonObj = $content | ConvertFrom-Json;
             $latestBDSVer = $jsonObj | Select-Object -Last 1;
             $LLVer = $LLjson.workflow_runs[0].head_commit.id.Substring(0, 6);
-            if (!Test-Path -Path ".\liteloader_nightly_manifest.json" -PathType Leaf) {
+            $manifestExists = Test-Path -Path ".\liteloader_nightly_manifest.json" -PathType Leaf;
+            if (!$manifestExists) {
                 $LLEntry = @{ "Version"=$LLVer; "LLUrl"="https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/"+$LLVer+"/LiteLoaderBDS.zip"; };
             } else {
                 $LLExisting = get-content 'liteloader_nightly_manifest.json';

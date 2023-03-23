@@ -22,7 +22,7 @@ jobs:
                 [string]$LLUrl; 
             }
             $index = 0;
-            $Headers = @{ "Accept"="application/vnd.github+json"; "X-GitHub-Api-Version"="2022-11-28"; "Authorization"="Bearer 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" };
+            $Headers = @{ "Accept"="application/vnd.github+json"; "X-GitHub-Api-Version"="2022-11-28"; "Authorization"="Bearer ${{ secrets.GITHUB_TOKEN }}" };
             $LLReply = Invoke-WebRequest -uri "https://api.github.com/repos/LiteLDev/LiteLoaderBDS/actions/runs" -Headers $Headers;
             $LLjson = $LLreply.Content | ConvertFrom-Json -AsHashtable;
             while (($LLjson.workflow_runs[$index].status -ne "completed") -or ($LLjson.workflow_runs[$index].conclusion -ne "success")) {

@@ -1,0 +1,108 @@
+name: LLNightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 0 * * *'
+
+jobs:
+    check-version:
+        name: check-version
+
+        runs-on: windows-2022
+
+        steps:
+        - uses: actions/checkout@v3
+        - run: |
+            Set-PSDebug -Trace 1;
+            class LiteLoaderNightlyInfo { 
+                [string]$Version; 
+                [string]$BDSVersion; 
+                [string]$LLUrl; 
+            }
+            $index = 0;
+            $Headers = @{ "Accept"="application/vnd.github+json"; "X-GitHub-Api-Version"="2022-11-28"; "Authorization"="Bearer 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" };
+            $LLReply = Invoke-WebRequest -uri "https://api.github.com/repos/LiteLDev/LiteLoaderBDS/actions/runs" -Headers $Headers;
+            $LLjson = $LLreply.Content | ConvertFrom-Json -AsHashtable;
+            while (($LLjson.workflow_runs[$index].status -ne "completed") -or ($LLjson.workflow_runs[$index].conclusion -ne "success")) {
+                $index++;
+            }
+            $index;
+            $LLArchive;
+            $LLEntry;
+            $content = Invoke-WebRequest -UseBasicParsing -uri "https://github.com/crowbarmaster/BedrockManagementService/raw/master/BMS_Files/bedrock_version_manifest.json";
+            $jsonObj = $content | ConvertFrom-Json;
+            $latestBDSVer = $jsonObj | Select-Object -Last 1;
+            $LLVer = $LLjson.workflow_runs[0].head_commit.id.Substring(0, 6);
+            $LLExisting = get-content 'liteloader_nightly_manifest.json';
+            if (!$LLExisting) {
+                $LLEntry = @{ "Version"=$LLVer; "LLUrl"="https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/"+$LLVer+"/LiteLoaderBDS.zip"; };
+            } else {
+                $LLExistingJson = $LLExisting | ConvertFrom-Json -NoEnumerate;
+                $LLEntry = $LLExistingJson | Select-Object -Last 1;
+            }
+            if (($LLEntry.Version -ne $LLVer) -or (!$LLExisting)) {
+                $LLEntry = [LiteLoaderNightlyInfo]@{ 
+                    Version=$LLVer;
+                    LLUrl="https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/"+$LLVer+"/LiteLoaderBDS.zip";
+                    BDSVersion=$latestBDSVer.Version;
+                }
+                if(!$LLExisting){
+                    $LLEntry | ConvertTo-Json -depth 100 -AsArray | Out-File "liteloader_nightly_manifest.json";
+                } else {
+                    $LLExistingJson += $LLEntry;
+                    $LLExistingJson | ConvertTo-Json -depth 100 -AsArray | Out-File "liteloader_nightly_manifest.json";
+                }
+                $ArtifactObjUrl = $LLjson.workflow_runs[$index].artifacts_url;
+                $ArtifactObj = (Invoke-WebRequest -uri $ArtifactObjUrl -Headers $Headers).Content | ConvertFrom-Json -AsHashtable;
+                foreach ($artifact in $ArtifactObj.artifacts) {
+                    if ($artifact.name -eq "PDB") {
+                        continue;
+                    }
+                    if ($artifact.name -eq "LiteLoaderBDS") {
+                        $LLArchive = $artifact;
+                    } else {
+                        $response = Invoke-WebRequest -uri $artifact.archive_download_url -Headers $Headers -Outfile "Plugin.zip" -passthru;
+                        $rawZipName = $response.Headers.'Content-Disposition'.Split("; ")[1].Substring(9);
+                        $pluginName = $rawZipName.Substring(0, $rawZipName.Length - 4);
+                        Set-PSDebug -Trace 0;
+                        if($pluginName -ne "PeEditor") {
+                            Expand-Archive -Path Plugin.zip -DestinationPath .\plugins\$pluginName;
+                        }
+                        Set-PSDebug -Trace 1;
+                    }
+                }
+                Invoke-WebRequest -uri $LLArchive.archive_download_url -Headers $Headers -Outfile "LiteLoaderBDS.zip";
+                Set-PSDebug -Trace 0;
+                Compress-Archive -Path .\plugins -update -DestinationPath LiteLoaderBDS.zip;
+            }
+        - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+          with:
+            add: "liteloader_nightly_manifest.json"
+            author_name: Crowbarmaster
+            author_email: crowbarmasterhl2@gmail.com
+            commit: --signoff
+            committer_name: Crowbarmaster
+            committer_email: crowbarmasterhl2@gmail.com
+            cwd: '.'
+            default_author: Crowbarmaster
+            fetch: true
+            message: 'Update liteloader nightly manifest.'
+            new_branch: master
+            pathspec_error_handling: ignore
+            pull: ''
+            push: true
+            remove: ''
+            tag: ''
+            tag_push: ''
+            
+        - name: Push Automatic Release
+          uses: marvinpinto/action-automatic-releases@v1.2.1
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "${{ env.PROJ_VER }}"
+            prerelease: true
+            title: "LiteLoader beta build @ commit ${{ env.PROJ_VER }}"
+            files: |
+              "LiteLoaderBDS.zip"

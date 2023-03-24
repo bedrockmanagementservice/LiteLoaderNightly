@@ -106,5 +106,4 @@ jobs:
             automatic_release_tag: "${{ env.LLVer }}"
             prerelease: true
             title: "LiteLoader beta build @ commit ${{ env.LLVer }}"
-            files: |
-              "LiteLoaderBDS.zip"
+            files: LiteLoaderBDS.zip

@@ -35,6 +35,7 @@ jobs:
             $jsonObj = $content | ConvertFrom-Json;
             $latestBDSVer = $jsonObj | Select-Object -Last 1;
             $LLVer = $LLjson.workflow_runs[0].head_commit.id.Substring(0, 6);
+            echo "LLVer=$LLVer" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append;
             $manifestExists = Test-Path -Path ".\liteloader_nightly_manifest.json" -PathType Leaf;
             if (!$manifestExists) {
                 $LLEntry = @{ "Version"=$LLVer; "LLUrl"="https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/"+$LLVer+"/LiteLoaderBDS.zip"; };
@@ -102,8 +103,8 @@ jobs:
           uses: marvinpinto/action-automatic-releases@v1.2.1
           with:
             repo_token: "${{ secrets.GITHUB_TOKEN }}"
-            automatic_release_tag: "${{ env.PROJ_VER }}"
+            automatic_release_tag: "${{ env.LLVer }}"
             prerelease: true
-            title: "LiteLoader beta build @ commit ${{ env.PROJ_VER }}"
+            title: "LiteLoader beta build @ commit ${{ env.LLVer }}"
             files: |
               "LiteLoaderBDS.zip"

@@ -91,7 +91,7 @@ jobs:
             default_author: github_actor
             fetch: true
             message: 'Update liteloader nightly manifest.'
-            new_branch: master
+            new_branch: main
             pathspec_error_handling: ignore
             pull: ''
             push: true

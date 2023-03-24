@@ -87,7 +87,7 @@ jobs:
             committer_name: Crowbarmaster
             committer_email: crowbarmasterhl2@gmail.com
             cwd: '.'
-            default_author: Crowbarmaster
+            default_author: github_actor
             fetch: true
             message: 'Update liteloader nightly manifest.'
             new_branch: master

@@ -23,7 +23,6 @@ jobs:
             }
             $index = 0;
             $Headers = @{ "Accept"="application/vnd.github+json"; "X-GitHub-Api-Version"="2022-11-28"; "Authorization"="Bearer ${{ secrets.DISPATCHKEY }}" };
-            $dispatchMsg = "{ 'event_type': 'Build' }";
             $LLReply = Invoke-WebRequest -uri "https://api.github.com/repos/LiteLDev/LiteLoaderBDS/actions/runs" -Headers $Headers;
             $LLjson = $LLreply.Content | ConvertFrom-Json -AsHashtable;
             while (($LLjson.workflow_runs[$index].status -ne "completed") -or ($LLjson.workflow_runs[$index].conclusion -ne "success")) {
@@ -36,6 +35,7 @@ jobs:
             $jsonObj = $content | ConvertFrom-Json;
             $latestBDSVer = $jsonObj | Select-Object -Last 1;
             $LLVer = $LLjson.workflow_runs[0].head_commit.id.Substring(0, 6);
+            $dispatchMsg = '{"event_type":"Build","client_payload":{"LLVer":"' + $LLVer + '"}}';
             echo "LLVer=$LLVer" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append;
             $manifestExists = Test-Path -Path ".\liteloader_nightly_manifest.json" -PathType Leaf;
             if (!$manifestExists) {

@@ -67,20 +67,9 @@ jobs:
                     }
                     if ($artifact.name -eq "LiteLoaderBDS") {
                         $LLArchive = $artifact;
-                    } else {
-                        $response = Invoke-WebRequest -uri $artifact.archive_download_url -Headers $Headers -Outfile "Plugin.zip" -passthru;
-                        $rawZipName = $response.Headers.'Content-Disposition'.Split("; ")[1].Substring(9);
-                        $pluginName = $rawZipName.Substring(0, $rawZipName.Length - 4);
-                        Set-PSDebug -Trace 0;
-                        if($pluginName -ne "PeEditor") {
-                            Expand-Archive -Path Plugin.zip -DestinationPath .\plugins\$pluginName;
-                        }
-                        Set-PSDebug -Trace 1;
                     }
                 }
                 Invoke-WebRequest -uri $LLArchive.archive_download_url -Headers $Headers -Outfile "LiteLoaderBDS.zip";
-                Set-PSDebug -Trace 0;
-                Compress-Archive -Path .\plugins -update -DestinationPath LiteLoaderBDS.zip;
             }
         - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
           with:

@@ -113,5 +113,10 @@
     "Version": "38d81e",
     "BDSVersion": "1.20.0.01",
     "LLUrl": "https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/38d81e/LiteLoaderBDS.zip"
+  },
+  {
+    "Version": "fd2373",
+    "BDSVersion": "1.20.0.01",
+    "LLUrl": "https://github.com/bedrockmanagementservice/LiteLoaderNightly/releases/download/fd2373/LiteLoaderBDS.zip"
   }
 ]
